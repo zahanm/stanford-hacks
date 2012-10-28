@@ -1,0 +1,15 @@
+{
+  "name": "scpd",
+  "version": "0.0.1",
+  "description": "SCPD Videos",
+  "main": "vcurl.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": "",
+  "author": "Zahan Malkani <z@zahanm.com>",
+  "license": "MIT",
+  "dependencies": {
+    "commander": "~1.0.5"
+  }
+}
