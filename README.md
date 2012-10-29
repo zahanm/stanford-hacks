@@ -29,8 +29,3 @@ Dependencies
         npm install
 
   in the `scpd/` directory
-
-Differences
-
-    http://cobb.stanford.edu/courses/-/-/+-+-+-+.wmv
-    mmsh://cobb.stanford.edu/courses/-/-/+-+-+-+.wmv?MSWMExt=.asf

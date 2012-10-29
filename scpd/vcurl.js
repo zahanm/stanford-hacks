@@ -1,9 +1,9 @@
 
 /*
-Deps
+Deps and Command-line Specs
 */
 
-var vcurl = require('commander')
+var prompt = require('prompt')
  , Browser = require('zombie')
  , assert = require('assert')
  , util = require('util')
@@ -11,6 +11,27 @@ var vcurl = require('commander')
  , spawn = require('child_process').spawn
  , fs = require('fs')
  , pace = require('pace');
+
+var argv = require('optimist')
+.usage("Usage: $0 -c <class> -n <number>")
+.demand('c')
+.default('n', 1)
+.boolean(['s', 'd'])
+.alias({
+ 'c': 'class',
+ 's': 'section',
+ 'n': 'number',
+ 'd': 'debug'
+})
+.describe({
+ 'c': 'Class code (eg: cs221)',
+ 's': 'Include section videos?',
+ 'n': 'Number of lectures to download',
+ 'd': 'Output debug information'
+})
+.argv;
+
+prompt.message = "vcurl";
 
 /*
 Globals
@@ -30,59 +51,50 @@ var classTitles = {
 var vidpagelist = [];
 
 /*
-Command-line specs
-*/
-
-vcurl
-  .version('0.0.1')
-  .option('-c, --class <name>', 'Class code (eg: cs221)')
-  .option('-s, --section', 'Add to include section videos')
-  .option('-n, --number <num>', 'Number of lectures to download')
-  .option('-d, --debug', 'Output debug information')
-  .parse(process.argv);
-
-/*
 Script
 */
 
 function errorOut(err) {
   console.error("---");
   console.error(err);
-  vcurl.help();
+  argv.showHelp();
+  process.exit(1);
 }
 
 function checkRequiredArgs() {
-  // type coercion
-  vcurl.number = Number(vcurl.number);
-  // required
-  var required = [ "class", "number" ];
-  required.forEach(function (arg) {
-    if (!vcurl[arg])
-      errorOut(new Error("Missing required argument \"" + arg + "\""));
-  });
   // flexible matching
-  hacker.classTitle = classTitles[vcurl["class"]] || (function () {
+  hacker.classTitle = classTitles[argv.class] || (function () {
     var title;
     for (code in classTitles) {
       if (classTitles.hasOwnProperty(code))
-        if (vcurl["class"].toLowerCase() === code.toLowerCase())
+        if (argv.class.toLowerCase() === code.toLowerCase())
           return classTitles[code];
     }
   }());
   if (!hacker.classTitle)
-    errorOut(new Error("Invalid class name: \"" + vcurl["class"] + "\""));
+    errorOut(new Error("Invalid class name: \"" + argv.class + "\""));
   // option activation
-  browser.debug = vcurl.debug || false;
+  browser.debug = argv.debug || false;
 }
 
 function getCredentials(callback) {
   browser.log('-- Gathering credentials needed to authenticate');
-  vcurl.prompt("sunetid: ", function (sunetid) {
-    vcurl.password("password: ", function (pw) {
-      hacker.sunetid = sunetid;
-      hacker.pw = pw;
-      callback();
-    });
+  prompt.start();
+
+  prompt.get({ properties: {
+    sunetid: {
+      required: true
+    },
+    password: {
+      hidden: true,
+      required: true
+    }
+  }}, function (err, result) {
+    if (err)
+      errorOut(err);
+    hacker.sunetid = result.sunetid;
+    hacker.pw = result.password;
+    callback();
   });
 }
 
@@ -120,9 +132,9 @@ function flowLectures() {
       days = Array.prototype.slice.call(days, 1);
       days.forEach(function (day) {
         var typetext = day.cells[2].textContent;
-        if (vcurl.section || !typetext.match(/problem\s+session/i)) {
+        if (argv.section || !typetext.match(/problem\s+session/i)) {
           var wmplink = day.querySelector("a:contains(WMP)");
-          if (vidpagelist.length < vcurl.number) {
+          if (vidpagelist.length < argv.number) {
             addToDownList(wmplink);
           }
         }
@@ -171,12 +183,12 @@ function flowDownloads(downlinks) {
     fs.mkdirSync("./scpdvideos");
   // make output directory - mkdir -p
   browser.log("-- Video links:\n" + downlinks.join('\n') + '\n');
-  var progress = pace({ total: vcurl.number * expectedFileSize });
+  var progress = pace({ total: argv.number * expectedFileSize });
   var command = "mplayer";
   var args = ["-dumpstream", "-dumpfile"];
   var vidnum = 1;
   async.forEachSeries(downlinks, function (downlink, next) {
-    var fname = vcurl["class"] + "-" + (vcurl.number - vidnum + 1) + ".wmv"
+    var fname = argv.class + "-" + (argv.number - vidnum + 1) + ".wmv"
     var child = spawn(command, args.concat(fname, downlink), {
       stdio: "pipe",
       cwd: "./scpdvideos"
