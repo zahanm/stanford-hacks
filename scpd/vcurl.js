@@ -199,7 +199,8 @@ function flowDownloads(downlinks) {
     console.log("Exiting since dry-run option was specified");
     return;
   }
-  var progress = pace({ total: argv.number * expectedFileSize });
+  var totalBytes = argv.number * expectedFileSize;
+  var progress = pace({ total: totalBytes });
   var command = "mplayer";
   var args = ["-dumpstream", "-dumpfile"];
   var vidnum = 1;
@@ -224,13 +225,14 @@ function flowDownloads(downlinks) {
       var match = String(data).match(/dump:\s+(\d+)\s+bytes/);
       if (match) {
         var bytes = Number(match[1]);
-        var finished = bytes / expectedFileSize;
-        progress.op((vidnum - 1) * expectedFileSize + bytes);
+        var completed = (vidnum - 1) * expectedFileSize + bytes
+        progress.op((completed >= totalBytes) ? totalBytes - 1 : completed);
       }
     });
   }, function (err) {
     if (err)
       errorOut(err);
+    progress.op(totalBytes);
     console.log("Finished downloading " + downlinks.length + " videos");
   });
 }
