@@ -2,3 +2,6 @@
 # node specific
 node_modules/
 npm-debug.log
+
+# this project
+/scpdvideos/
