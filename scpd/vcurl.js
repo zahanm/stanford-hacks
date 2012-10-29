@@ -15,19 +15,21 @@ var prompt = require('prompt')
 var argv = require('optimist')
 .usage("Usage: $0 -c <class> -n <number>")
 .demand('c')
-.default('n', 1)
+.default({'n': 1, 'k': 0})
 .boolean(['s', 'd'])
 .alias({
- 'c': 'class',
- 's': 'section',
- 'n': 'number',
- 'd': 'debug'
+  'c': 'class',
+  's': 'section',
+  'n': 'number',
+  'd': 'debug',
+  'k': 'skip'
 })
 .describe({
- 'c': 'Class code (eg: cs221)',
- 's': 'Include section videos?',
- 'n': 'Number of lectures to download',
- 'd': 'Output debug information'
+  'c': 'Class code (eg: cs221)',
+  's': 'Include section videos?',
+  'n': 'Number of lectures to download',
+  'd': 'Output debug information',
+  'k': 'Skip videos from front'
 })
 .argv;
 
@@ -99,6 +101,7 @@ function getCredentials(callback) {
 }
 
 function flowLogin() {
+  console.log("Getting video download links, please be patient");
   browser.on("error", errorOut);
   browser.visit("https://myvideosu.stanford.edu")
   .then(function () {
@@ -134,12 +137,13 @@ function flowLectures() {
         var typetext = day.cells[2].textContent;
         if (argv.section || !typetext.match(/problem\s+session/i)) {
           var wmplink = day.querySelector("a:contains(WMP)");
-          if (vidpagelist.length < argv.number) {
+          if (vidpagelist.length < (argv.number + argv.skip)) {
             addToDownList(wmplink);
           }
         }
       });
     });
+    vidpagelist.splice(0, argv.skip);
     flowVideoLinks();
   });
 }
@@ -187,21 +191,24 @@ function flowDownloads(downlinks) {
   var command = "mplayer";
   var args = ["-dumpstream", "-dumpfile"];
   var vidnum = 1;
+  // download in reverse order to facilitate viewing right away
+  downlinks.reverse();
   async.forEachSeries(downlinks, function (downlink, next) {
-    var fname = argv.class + "-" + (argv.number - vidnum + 1) + ".wmv"
+    var fname = argv.class + "-" + vidnum + ".wmv"
     var child = spawn(command, args.concat(fname, downlink), {
       stdio: "pipe",
       cwd: "./scpdvideos"
     });
     child.on('exit', function (code) {
       if (code !== 0) {
-        errorOut(new Error(
+        return next(new Error(
           "Cmd: \'" + command + " " + args.concat(fname, downlink).join(" ")
             + "\' failed"
         ));
       }
       progress.op(vidnum * expectedFileSize);
       vidnum++;
+      next(null);
     });
     child.stdout.on("data", function (data) {
       var match = String(data).match(/dump:\s+(\d+)\s+bytes/);
