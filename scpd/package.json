@@ -11,6 +11,7 @@
   "license": "MIT",
   "dependencies": {
     "commander": "~1.0.5",
-    "zombie": "~1.4.1"
+    "zombie": "~1.4.1",
+    "async": "~0.1.22"
   }
 }

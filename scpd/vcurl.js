@@ -7,13 +7,13 @@ var vcurl = require('commander');
 var Browser = require('zombie');
 var assert = require('assert');
 var util = require('util');
+var async = require('async');
 
 /*
 Globals
 */
 
 var browser = new Browser({
-  debug: true,
   loadCSS: false,
   runScripts: false
 });
@@ -24,7 +24,7 @@ var classTitles = {
   "CS221": "Artificial Intelligence: Principles and Techniques",
   "CS224N": "Natural Language Processing",
 };
-var downlist = [];
+var vidpagelist = [];
 
 /*
 Command-line specs
@@ -91,40 +91,79 @@ function flowLogin() {
     browser.log("-- Filling out login form");
     browser.fill("username", hacker.sunetid);
     browser.fill("password", hacker.pw);
-    browser.pressButton("Login", browser.wait.bind(browser, flowClassSelection));
-  });
+    return browser.pressButton("Login");
+  })
+  .then(flowClassSelection);
 }
 
 function flowClassSelection() {
-  // myvideosu page
-  browser.log("-- Navigating to class page");
-  var link = browser.link(hacker.classTitle);
-  browser.clickLink(link, browser.wait.bind(browser, flowLectures));
+  browser.wait(function () {
+    // myvideosu page
+    browser.log("-- Navigating to class page");
+    var link = browser.link(hacker.classTitle);
+    browser.clickLink(link)
+    .then(flowLectures);
+  });
 }
 
 function flowLectures() {
-  // class lectures page
-  browser.log("-- Finding relevant lecture pages");
-  var weeks = browser.queryAll("#course_sections table");
-  weeks.forEach(function (week) {
-    var days = week.getElementsByTagName("tr");
-    // remove header row
-    days = Array.prototype.slice.call(days, 1);
-    days.forEach(function (day) {
-      var typetext = day.cells[2].textContent;
-      if (vcurl.section || !typetext.match(/problem\s+session/i)) {
-        var wmplink = day.querySelector("a:contains(WMP)");
-        if (downlist.length < vcurl.number) {
-          addToDownList(wmplink);
+  browser.wait(function () {
+    // class lectures page
+    browser.log("-- Finding relevant lecture pages");
+    var weeks = browser.queryAll("#course_sections table");
+    weeks.forEach(function (week) {
+      var days = week.getElementsByTagName("tr");
+      // remove header row
+      days = Array.prototype.slice.call(days, 1);
+      days.forEach(function (day) {
+        var typetext = day.cells[2].textContent;
+        if (vcurl.section || !typetext.match(/problem\s+session/i)) {
+          var wmplink = day.querySelector("a:contains(WMP)");
+          if (vidpagelist.length < vcurl.number) {
+            addToDownList(wmplink);
+          }
         }
-      }
+      });
     });
+    flowVideoLinks();
   });
 }
 
 function addToDownList(lecture) {
-  browser.log("--> " + lecture.href);
-  downlist.push(lecture.href);
+  // extracting url from -- javascript:void(window.open('.. [url] ..'))
+  var matches = lecture.href.match(/window\.open\('(.*)'\)/)
+  if (!matches) {
+    console.error("Bad vidpage url: " + util.inspect(lecture));
+    return;
+  }
+  var vidpage = matches[1].split(/\s+/).join('');
+  vidpagelist.push(vidpage);
+}
+
+function flowVideoLinks() {
+  // visit each video page in series
+  browser.log("-- Lecture pages: " + util.inspect(vidpagelist));
+  var page = 1;
+  async.mapSeries(vidpagelist, function (vidpage, next) {
+    browser.visit(vidpage, function () {
+      browser.log("-- Looking at video page " + page);
+      var wmplayer = browser.query("#WMPlayer");
+      if (!wmplayer)
+        next(new Error("Video page is missing #WMPlayer component"));
+      var httplink = wmplayer.attributes["data"].value
+      var mmshlink = "mmsh" + httplink.match(/http(.*)/)[1] + "?MSWMExt=.asf";
+      page++;
+      next(null, mmshlink);
+    });
+  }, function (err, downlinks) {
+    if (err)
+      errorOut(err);
+    flowDownloads(downlinks);
+  });
+}
+
+function flowDownloads(downlinks) {
+  console.log(util.inspect(downlinks));
 }
 
 function main() {
