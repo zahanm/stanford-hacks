@@ -16,20 +16,22 @@ var argv = require('optimist')
 .usage("Usage: $0 -c <class> -n <number>")
 .demand('c')
 .default({'n': 1, 'k': 0})
-.boolean(['s', 'd'])
+.boolean(['s', 'd', 'N'])
 .alias({
   'c': 'class',
   's': 'section',
   'n': 'number',
   'd': 'debug',
-  'k': 'skip'
+  'k': 'skip',
+  'N': 'simulate'
 })
 .describe({
   'c': 'Class code (eg: cs221)',
   's': 'Include section videos?',
   'n': 'Number of lectures to download',
   'd': 'Output debug information',
-  'k': 'Skip videos from front'
+  'k': 'Skip videos from front',
+  'N': 'Perform dry-run, without downloading'
 })
 .argv;
 
@@ -191,8 +193,12 @@ function flowDownloads(downlinks) {
   // make output directory - mkdir
   if (!fs.existsSync("./scpdvideos"))
     fs.mkdirSync("./scpdvideos");
-  var lectures = downlinks.map(function (d) { return d.date });
+  var lectures = downlinks.map(function (d) { return d.date + " => " + d.url });
   console.log("Getting videos:\n" + lectures.join('\n') + '\n');
+  if (argv.simulate) {
+    console.log("Exiting since dry-run option was specified");
+    return;
+  }
   var progress = pace({ total: argv.number * expectedFileSize });
   var command = "mplayer";
   var args = ["-dumpstream", "-dumpfile"];
