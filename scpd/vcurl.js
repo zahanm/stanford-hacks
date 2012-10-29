@@ -3,11 +3,14 @@
 Deps
 */
 
-var vcurl = require('commander');
-var Browser = require('zombie');
-var assert = require('assert');
-var util = require('util');
-var async = require('async');
+var vcurl = require('commander')
+ , Browser = require('zombie')
+ , assert = require('assert')
+ , util = require('util')
+ , async = require('async')
+ , spawn = require('child_process').spawn
+ , fs = require('fs')
+ , pace = require('pace');
 
 /*
 Globals
@@ -142,7 +145,7 @@ function addToDownList(lecture) {
 
 function flowVideoLinks() {
   // visit each video page in series
-  browser.log("-- Lecture pages: " + util.inspect(vidpagelist));
+  browser.log("-- Lecture pages:\n" + vidpagelist.join('\n') + '\n');
   var page = 1;
   async.mapSeries(vidpagelist, function (vidpage, next) {
     browser.visit(vidpage, function () {
@@ -163,7 +166,44 @@ function flowVideoLinks() {
 }
 
 function flowDownloads(downlinks) {
-  console.log(util.inspect(downlinks));
+  // Actually download the videos, using mplayer
+  if (!fs.existsSync("./scpdvideos"))
+    fs.mkdirSync("./scpdvideos");
+  // make output directory - mkdir -p
+  browser.log("-- Video links:\n" + downlinks.join('\n') + '\n');
+  var progress = pace({ total: vcurl.number * expectedFileSize });
+  var command = "mplayer";
+  var args = ["-dumpstream", "-dumpfile"];
+  var vidnum = 1;
+  async.forEachSeries(downlinks, function (downlink, next) {
+    var fname = vcurl["class"] + "-" + (vcurl.number - vidnum + 1) + ".wmv"
+    var child = spawn(command, args.concat(fname, downlink), {
+      stdio: "pipe",
+      cwd: "./scpdvideos"
+    });
+    child.on('exit', function (code) {
+      if (code !== 0) {
+        errorOut(new Error(
+          "Cmd: \'" + command + " " + args.concat(fname, downlink).join(" ")
+            + "\' failed"
+        ));
+      }
+      progress.op(vidnum * expectedFileSize);
+      vidnum++;
+    });
+    child.stdout.on("data", function (data) {
+      var match = String(data).match(/dump:\s+(\d+)\s+bytes/);
+      if (match) {
+        var bytes = Number(match[1]);
+        var finished = bytes / expectedFileSize;
+        progress.op((vidnum - 1) * expectedFileSize + bytes);
+      }
+    });
+  }, function (err) {
+    if (err)
+      errorOut(err);
+    console.log("Finished downloading " + downlinks.length + " videos");
+  });
 }
 
 function main() {
