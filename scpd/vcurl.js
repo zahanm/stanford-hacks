@@ -137,8 +137,11 @@ function flowLectures() {
         var typetext = day.cells[2].textContent;
         if (argv.section || !typetext.match(/problem\s+session/i)) {
           var wmplink = day.querySelector("a:contains(WMP)");
+          var d = new Date(day.cells[1].textContent);
           if (vidpagelist.length < (argv.number + argv.skip)) {
-            addToDownList(wmplink);
+            var date = (d.getMonth() + 1) + "-" + d.getDate() +
+              "-" + d.getFullYear();
+            addToDownList(wmplink, date);
           }
         }
       });
@@ -148,7 +151,7 @@ function flowLectures() {
   });
 }
 
-function addToDownList(lecture) {
+function addToDownList(lecture, date) {
   // extracting url from -- javascript:void(window.open('.. [url] ..'))
   var matches = lecture.href.match(/window\.open\('(.*)'\)/)
   if (!matches) {
@@ -156,7 +159,7 @@ function addToDownList(lecture) {
     return;
   }
   var vidpage = matches[1].split(/\s+/).join('');
-  vidpagelist.push(vidpage);
+  vidpagelist.push({ url: vidpage, date: date });
 }
 
 function flowVideoLinks() {
@@ -164,7 +167,7 @@ function flowVideoLinks() {
   browser.log("-- Lecture pages:\n" + vidpagelist.join('\n') + '\n');
   var page = 1;
   async.mapSeries(vidpagelist, function (vidpage, next) {
-    browser.visit(vidpage, function () {
+    browser.visit(vidpage.url, function () {
       browser.log("-- Looking at video page " + page);
       var wmplayer = browser.query("#WMPlayer");
       if (!wmplayer)
@@ -172,7 +175,7 @@ function flowVideoLinks() {
       var httplink = wmplayer.attributes["data"].value
       var mmshlink = "mmsh" + httplink.match(/http(.*)/)[1] + "?MSWMExt=.asf";
       page++;
-      next(null, mmshlink);
+      next(null, { url: mmshlink, date: vidpage.date });
     });
   }, function (err, downlinks) {
     if (err)
@@ -183,26 +186,27 @@ function flowVideoLinks() {
 
 function flowDownloads(downlinks) {
   // Actually download the videos, using mplayer
+  // download in reverse order to facilitate viewing right away
+  downlinks.reverse();
+  // make output directory - mkdir
   if (!fs.existsSync("./scpdvideos"))
     fs.mkdirSync("./scpdvideos");
-  // make output directory - mkdir -p
-  browser.log("-- Video links:\n" + downlinks.join('\n') + '\n');
+  var lectures = downlinks.map(function (d) { return d.date });
+  console.log("Getting videos:\n" + lectures.join('\n') + '\n');
   var progress = pace({ total: argv.number * expectedFileSize });
   var command = "mplayer";
   var args = ["-dumpstream", "-dumpfile"];
   var vidnum = 1;
-  // download in reverse order to facilitate viewing right away
-  downlinks.reverse();
   async.forEachSeries(downlinks, function (downlink, next) {
-    var fname = argv.class + "-" + vidnum + ".wmv"
-    var child = spawn(command, args.concat(fname, downlink), {
+    var fname = argv.class + " " + downlink.date + ".wmv";
+    var child = spawn(command, args.concat(fname, downlink.url), {
       stdio: "pipe",
       cwd: "./scpdvideos"
     });
     child.on('exit', function (code) {
       if (code !== 0) {
         return next(new Error(
-          "Cmd: \'" + command + " " + args.concat(fname, downlink).join(" ")
+          "Cmd: \'" + command + " " + args.concat(fname, downlink.url).join(" ")
             + "\' failed"
         ));
       }
