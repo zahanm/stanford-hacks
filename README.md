@@ -24,7 +24,8 @@ Again, usage by
 Dependencies
 
 - Node v0.8+
-- Install deps using
+- MPlayer ~v1.1
+- Install other node deps using
 
         npm install
 
