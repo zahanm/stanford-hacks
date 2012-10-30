@@ -15,7 +15,7 @@ var prompt = require('prompt')
 var argv = require('optimist')
 .usage("Usage: $0 -c <class> -n <number>")
 .demand('c')
-.default({'n': 1, 'k': 0})
+.default({ 'n': 1, 'k': 0, 'o': "./scpdvideos" })
 .boolean(['s', 'd', 'N'])
 .alias({
   'c': 'class',
@@ -23,7 +23,8 @@ var argv = require('optimist')
   'n': 'number',
   'd': 'debug',
   'k': 'skip',
-  'N': 'simulate'
+  'N': 'simulate',
+  'o': 'output'
 })
 .describe({
   'c': 'Class code (eg: cs221)',
@@ -31,7 +32,8 @@ var argv = require('optimist')
   'n': 'Number of lectures to download',
   'd': 'Output debug information',
   'k': 'Skip videos from front',
-  'N': 'Perform dry-run, without downloading'
+  'N': 'Perform dry-run, without downloading',
+  'o': 'Output folder to save files'
 })
 .argv;
 
@@ -191,8 +193,8 @@ function flowDownloads(downlinks) {
   // download in reverse order to facilitate viewing right away
   downlinks.reverse();
   // make output directory - mkdir
-  if (!fs.existsSync("./scpdvideos"))
-    fs.mkdirSync("./scpdvideos");
+  if (!fs.existsSync(argv.output))
+    fs.mkdirSync(argv.output);
   var lectures = downlinks.map(function (d) { return d.date + " => " + d.url });
   console.log("Getting videos:\n" + lectures.join('\n') + '\n');
   if (argv.simulate) {
@@ -208,7 +210,7 @@ function flowDownloads(downlinks) {
     var fname = argv.class + " " + downlink.date + ".wmv";
     var child = spawn(command, args.concat(fname, downlink.url), {
       stdio: "pipe",
-      cwd: "./scpdvideos"
+      cwd: argv.output
     });
     child.on('exit', function (code) {
       if (code !== 0) {
