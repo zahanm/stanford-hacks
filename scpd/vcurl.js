@@ -226,7 +226,7 @@ function flowDownloads(downlinks) {
       if (match) {
         var bytes = Number(match[1]);
         var completed = (vidnum - 1) * expectedFileSize + bytes
-        progress.op((completed >= totalBytes) ? totalBytes - 1 : completed);
+        progress.op((completed < totalBytes) ? completed : (totalBytes - 1));
       }
     });
   }, function (err) {
