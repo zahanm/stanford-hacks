@@ -120,7 +120,7 @@ function flowClassSelection() {
   browser.wait(function () {
     // myvideosu page
     browser.log("-- Navigating to class page");
-    var link = browser.link(hacker.classTitle);
+    var link = browser.query("a:contains(\'" + hacker.classTitle + "\')");
     browser.clickLink(link)
     .then(flowLectures);
   });
