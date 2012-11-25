@@ -19,13 +19,17 @@ SCPD Video Downloads
 
 Again, usage by
 
-    node vcurl.js
+    scpd-curl
 
 Dependencies
 
 - Node v0.8+
 - MPlayer ~v1.1
-- Install other node deps using
+- Install this package using
+
+        npm install -g scpd-curl
+
+- If you are a developer, install other node deps using
 
         npm install
 
