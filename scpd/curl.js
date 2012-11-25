@@ -15,7 +15,7 @@ var prompt = require('prompt')
 var argv = require('optimist')
 .usage("Usage: scpd-curl -c <class> -n <number>")
 .demand('c')
-.default({ 'n': 1, 'k': 0, 'o': "./scpdvideos" })
+.default({ 'n': 1, 'k': 0, 'o': "~/Downloads/scpdvideos" })
 .boolean(['s', 'd', 'N'])
 .alias({
   'c': 'class',
