@@ -6,6 +6,9 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "bin": {
+    "scpd-curl": "./cli"
+  },
   "repository": "git://github.com/zahanm/stanford-hacks.git",
   "author": "Zahan Malkani <z@zahanm.com>",
   "license": "MIT",

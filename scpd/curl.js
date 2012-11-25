@@ -13,7 +13,7 @@ var prompt = require('prompt')
  , pace = require('pace');
 
 var argv = require('optimist')
-.usage("Usage: $0 -c <class> -n <number>")
+.usage("Usage: scpd-curl -c <class> -n <number>")
 .demand('c')
 .default({ 'n': 1, 'k': 0, 'o': "./scpdvideos" })
 .boolean(['s', 'd', 'N'])
@@ -37,7 +37,7 @@ var argv = require('optimist')
 })
 .argv;
 
-prompt.message = "vcurl";
+prompt.message = "scpd-curl";
 
 /*
 Globals
@@ -53,6 +53,10 @@ var classTitles = {
   "CS229": "Machine Learning",
   "CS221": "Artificial Intelligence: Principles and Techniques",
   "CS224N": "Natural Language Processing",
+  "CS106X": "Programming Abstractions (Accelerated)",
+  "CS161": "Design and Analysis of Algorithms",
+  "CS140": "Operating Systems and Systems Programming",
+  "CS144": "Introduction to Computer Networking"
 };
 var vidpagelist = [];
 
@@ -251,5 +255,5 @@ Boilerplate
 if (require.main === module) {
   main();
 } else {
-  console.log("This script is meant for interactive use only");
+  exports.run = main;
 }
