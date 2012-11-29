@@ -10,12 +10,13 @@ var prompt = require('prompt')
  , async = require('async')
  , spawn = require('child_process').spawn
  , fs = require('fs')
+ , path = require('path')
  , pace = require('pace');
 
 var argv = require('optimist')
 .usage("Usage: scpd-curl -c <class> -n <number>")
 .demand('c')
-.default({ 'n': 1, 'k': 0, 'o': "~/Downloads/scpdvideos" })
+.default({ 'n': 1, 'k': 0, 'o': path.join(process.env.HOME, "/Downloads/scpdvideos") })
 .boolean(['s', 'd', 'N'])
 .alias({
   'c': 'class',
