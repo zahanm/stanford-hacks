@@ -1,6 +1,6 @@
 {
   "name": "scpd-curl",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "SCPD Videos",
   "main": "curl.js",
   "scripts": {
