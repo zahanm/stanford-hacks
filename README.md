@@ -45,7 +45,7 @@ Installation on a Mac
     Just get the pre-packaged binary.
 
 
-- Install the [package](https://github.com/zahanm/stanford-hacks/tree/master/scpd) that I wrote
+- Install the package that I wrote
 
 	    npm install -g scpd-curl
 
@@ -62,7 +62,9 @@ Installation on a Mac
         npm uninstall -g scpd-curl
         brew uninstall mplayer
     
-    Figure out how to get rid of Node and Homebrew
+    Figure out how to get rid of Node
+    
+    Homebrew [un-installation instructions](https://gist.github.com/1173223)
 
 Webshop Reservations
 ======
