@@ -1,24 +1,14 @@
 
-Webshop Reservations
-======
-
-To use, be smart
-
-    python reserve.py
-
-Dependencies
-
-- Python 2.6+
-- curl
-
 SCPD Video Downloads
 ========
 
-Again, usage by
+Usage
+---
 
     scpd-curl
 
 Dependencies
+---
 
 - Node v0.8+
 - MPlayer ~v1.1
@@ -30,9 +20,9 @@ Dependencies
 
         npm install
 
-  in the `scpd/` directory
+  in the `./scpd/` directory
 
-Installing SCPD Video Downloader on a Mac
+Installation on a Mac
 ------
 
 - Install Homebrew (http://mxcl.github.com/homebrew/)
@@ -71,6 +61,18 @@ Installing SCPD Video Downloader on a Mac
 
         npm uninstall -g scpd-curl
         brew uninstall mplayer
-        brew uninstall node
-        https://gist.github.com/1173223
+    
+    Figure out how to get rid of Node and Homebrew
 
+Webshop Reservations
+======
+
+To use, be smart
+
+    python reserve.py
+
+Dependencies
+---
+
+- Python 2.6+
+- curl
