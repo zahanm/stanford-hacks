@@ -25,6 +25,11 @@ Dependencies
 Installation on a Mac
 ------
 
+- If you haven't already, install XCode from the Mac App Store
+
+    Once it's installed, go to `Preferences -> Downloads -> Components`,
+    and install the `Command Line Tools`.
+
 - Install Homebrew (http://mxcl.github.com/homebrew/)
 
     It's a manager for command line packages for OSX.
